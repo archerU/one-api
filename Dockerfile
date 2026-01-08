@@ -67,7 +67,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 FROM ${FFMPEG_IMAGE} AS final
 ARG TARGETARCH
 LABEL org.opencontainers.image.title="one-api" \
-            org.opencontainers.image.source="https://github.com/Laisky/one-api" \
+            org.opencontainers.image.source="https://github.com/archerU/one-api" \
             org.opencontainers.image.licenses="MIT"
 
 ENV DEBIAN_FRONTEND=noninteractive \

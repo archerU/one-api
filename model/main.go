@@ -71,9 +71,52 @@ func CreateRootAccountIfNeed() error {
 	return nil
 }
 
+// isPostgreSQLDSN checks if the DSN is a PostgreSQL connection string.
+// It supports both postgres:// and postgresql:// URL formats, as well as
+// key-value pair format (host=... dbname=...).
+func isPostgreSQLDSN(dsn string) bool {
+	dsn = strings.TrimSpace(dsn)
+	if dsn == "" {
+		return false
+	}
+	
+	dsnLower := strings.ToLower(dsn)
+	
+	// Check for PostgreSQL URL formats
+	if strings.HasPrefix(dsn, "postgres://") || strings.HasPrefix(dsn, "postgresql://") {
+		return true
+	}
+	
+	// Check for MySQL URL format or MySQL-specific patterns
+	if strings.HasPrefix(dsnLower, "mysql://") ||
+		strings.Contains(dsn, "@tcp(") ||
+		strings.Contains(dsn, "@unix(") {
+		return false
+	}
+	
+	// Check for PostgreSQL key-value pair format
+	// PostgreSQL DSN typically contains host=, dbname=, port=, sslmode= parameters
+	hasHost := strings.Contains(dsn, "host=")
+	hasDBName := strings.Contains(dsn, "dbname=")
+	hasPGPort := strings.Contains(dsn, "port=")
+	hasSSLMode := strings.Contains(dsn, "sslmode=")
+	
+	// If it has PostgreSQL-specific key-value pairs, it's likely PostgreSQL
+	if hasHost || hasDBName {
+		return true
+	}
+	
+	// Additional check: if it has port= and sslmode= together, likely PostgreSQL
+	if hasPGPort && hasSSLMode {
+		return true
+	}
+	
+	return false
+}
+
 func chooseDB(dsn string) (*gorm.DB, error) {
 	switch {
-	case strings.HasPrefix(dsn, "postgres://"):
+	case isPostgreSQLDSN(dsn):
 		// Use PostgreSQL
 		return openPostgreSQL(dsn)
 	case dsn != "":
